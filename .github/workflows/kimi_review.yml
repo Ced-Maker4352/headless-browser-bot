@@ -1,9 +1,9 @@
-name: Kimi-Dev Code Review
-
-# Give Actions the rights to read code and write PR comments
+# <— THIS PERMISSIONS SECTION MUST BE ON THE FIRST LINES OF THE FILE
 permissions:
-  contents: read      # needed to checkout and read your files
-  issues: write       # needed to post PR comments
+  contents: read
+  issues: write
+
+name: Kimi-Dev Code Review
 
 on:
   push:
