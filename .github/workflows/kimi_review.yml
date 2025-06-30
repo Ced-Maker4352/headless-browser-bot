@@ -1,0 +1,30 @@
+name: Kimi-Dev Code Review
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install huggingface_hub
+
+      - name: Run Kimi-Dev on sample_bug.py
+        env:
+          HF_HUB_TOKEN: ${{ secrets.HF_HUB_TOKEN }}
+        run: python run_kimi.py sample_bug.py
