@@ -1,33 +1,23 @@
+# .github/workflows/kimi_review.yml
+
 permissions:
-  contents: read
-  issues: write
+  contents: read        # allow reading your repo
+  issues: write         # allow posting PR comments
 
 name: Kimi-Dev Code Review
 
 on:
-  push:
-    branches:
-      - main
-  # Use pull_request_target so the Action has permission to post comments
   pull_request_target:
-    types: [opened, synchronize, reopened]
     branches:
       - main
 
 jobs:
   review:
     runs-on: ubuntu-latest
-    env:
-      HUGGINGFACEHUB_API_TOKEN: ${{ secrets.HF_HUB_TOKEN }}
-      # We still use GITHUB_TOKEN here; pull_request_target gives it write access to comments
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout code
-        # We need to checkout the PR's branch for analysis
         uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -35,29 +25,16 @@ jobs:
           python-version: '3.x'
 
       - name: Install dependencies
-        run: pip install huggingface_hub
+        run: |
+          python -m pip install --upgrade pip
+          pip install huggingface_hub
+
+      - name: Log in to Hugging Face
+        run: huggingface-cli login --token "${{ secrets.HF_HUB_TOKEN }}"
 
       - name: Run Kimi-Dev on all Python files
         run: |
-          mkdir -p $RUNNER_TEMP/_github_workflow
           find . -name '*.py' -not -path './.github/*' | while read file; do
-            echo "🛠️ Reviewing $file"
+            echo "🔍 Reviewing $file"
             python run_kimi.py "$file"
-            echo
-          done | tee $RUNNER_TEMP/_github_workflow/kimi_review.log
-
-      - name: Post report as PR comment
-        # Only run when this is a PR event
-        if: ${{ github.event_name == 'pull_request_target' }}
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const report = fs.readFileSync(`${process.env.RUNNER_TEMP}/_github_workflow/kimi_review.log`, 'utf8');
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: "🛠️ **Kimi-Dev Suggests:**\n\n```\n" + report + "\n```"
-            });
+          done
