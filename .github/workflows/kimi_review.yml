@@ -1,4 +1,4 @@
-# <— THIS PERMISSIONS SECTION MUST BE ON THE FIRST LINES OF THE FILE
+
 permissions:
   contents: read
   issues: write
