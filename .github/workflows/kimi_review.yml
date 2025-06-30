@@ -26,5 +26,10 @@ jobs:
       - name: Install dependencies
         run: pip install huggingface_hub
 
-      - name: Run Kimi-Dev on sample_bug.py
-        run: python run_kimi.py sample_bug.py
+      - name: Run Kimi-Dev on all Python files
+        run: |
+          find . -name '*.py' -not -path './.github/*' | while read file; do
+            echo "🛠️ Reviewing $file"
+            python run_kimi.py "$file"
+            echo
+          done
