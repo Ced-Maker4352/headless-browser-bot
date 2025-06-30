@@ -12,6 +12,10 @@ jobs:
   review:
     runs-on: ubuntu-latest
 
+    # Expose your HF token as the standard env var the SDK will pick up
+    env:
+      HUGGINGFACEHUB_API_TOKEN: ${{ secrets.HF_HUB_TOKEN }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -23,9 +27,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install huggingface_hub
-
-      - name: Log in to Hugging Face
-        run: huggingface-cli login --token ${{ secrets.HF_HUB_TOKEN }}
 
       - name: Run Kimi-Dev on sample_bug.py
         run: python run_kimi.py sample_bug.py
