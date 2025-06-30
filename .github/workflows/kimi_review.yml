@@ -1,10 +1,16 @@
+permissions:
+  contents: read
+  issues: write
+
 name: Kimi-Dev Code Review
 
 on:
   push:
     branches:
       - main
-  pull_request:
+  # Use pull_request_target so the Action has permission to post comments
+  pull_request_target:
+    types: [opened, synchronize, reopened]
     branches:
       - main
 
@@ -13,10 +19,15 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HUGGINGFACEHUB_API_TOKEN: ${{ secrets.HF_HUB_TOKEN }}
+      # We still use GITHUB_TOKEN here; pull_request_target gives it write access to comments
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout code
+        # We need to checkout the PR's branch for analysis
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -36,13 +47,14 @@ jobs:
           done | tee $RUNNER_TEMP/_github_workflow/kimi_review.log
 
       - name: Post report as PR comment
-        if: ${{ github.event_name == 'pull_request' }}
+        # Only run when this is a PR event
+        if: ${{ github.event_name == 'pull_request_target' }}
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const report = fs.readFileSync(process.env.RUNNER_TEMP + '/_github_workflow/kimi_review.log', 'utf8');
+            const report = fs.readFileSync(`${process.env.RUNNER_TEMP}/_github_workflow/kimi_review.log`, 'utf8');
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
