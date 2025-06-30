@@ -28,8 +28,24 @@ jobs:
 
       - name: Run Kimi-Dev on all Python files
         run: |
+          mkdir -p $RUNNER_TEMP/_github_workflow
           find . -name '*.py' -not -path './.github/*' | while read file; do
             echo "🛠️ Reviewing $file"
             python run_kimi.py "$file"
             echo
-          done
+          done | tee $RUNNER_TEMP/_github_workflow/kimi_review.log
+
+      - name: Post report as PR comment
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync(process.env.RUNNER_TEMP + '/_github_workflow/kimi_review.log', 'utf8');
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: "🛠️ **Kimi-Dev Suggests:**\n\n```\n" + report + "\n```"
+            });
