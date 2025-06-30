@@ -1,22 +1,26 @@
+import os
 import argparse
 from huggingface_hub import InferenceClient
 
 def main():
+    # 0. Read your HF token from the standard env var
+    token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+    if not token:
+        raise ValueError("Missing HUGGINGFACEHUB_API_TOKEN env var")
+
     # 1. Parse the filename from the command line
     parser = argparse.ArgumentParser(
         description="Run Kimi-Dev on a local Python file and get fix suggestions"
     )
-    parser.add_argument(
-        "file", help="Path to the Python file you want Kimi-Dev to check"
-    )
+    parser.add_argument("file", help="Path to the Python file you want Kimi-Dev to check")
     args = parser.parse_args()
 
     # 2. Read in your buggy code
     with open(args.file, "r") as f:
         buggy_code = f.read()
 
-    # 3. Initialize the HF conversational client
-    client = InferenceClient()
+    # 3. Initialize the HF conversational client with your token
+    client = InferenceClient(token=token)
 
     # 4. Build the chat messages
     system_msg = {
